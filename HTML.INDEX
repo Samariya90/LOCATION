@@ -1,1 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Location Capture Form</title>
 
+<style>
+body{
+font-family: Arial, sans-serif;
+background:#f2f2f2;
+padding:15px;
+}
+
+.container{
+max-width:500px;
+margin:auto;
+background:white;
+padding:20px;
+border-radius:8px;
+box-shadow:0 2px 8px rgba(0,0,0,0.2);
+}
+
+h2{
+text-align:center;
+}
+
+input,textarea,button{
+width:100%;
+padding:12px;
+margin-top:10px;
+border-radius:5px;
+border:1px solid #ccc;
+font-size:16px;
+}
+
+button{
+background:#007bff;
+color:white;
+border:none;
+font-weight:bold;
+}
+
+button:disabled{
+background:grey;
+}
+
+video{
+width:100%;
+border-radius:8px;
+margin-top:10px;
+}
+
+#status{
+margin-top:15px;
+font-weight:bold;
+text-align:center;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Field Location Form</h2>
+
+<form id="uploadForm"
+method="POST"
+action="https://script.google.com/macros/s/AKfycbxZVy_PEfstt2ivXeyXSv90sbnteCnlS8QXJSiSGiLhR5amyKBUpswOzjCTrRmcudlL/exec/exec">
+
+<input type="text" name="name" placeholder="Enter Name" required>
+
+<textarea name="details" placeholder="Other Details"></textarea>
+
+<input type="hidden" name="latitude" id="lat">
+<input type="hidden" name="longitude" id="lon">
+<input type="hidden" name="maplink" id="maplink">
+
+<input type="hidden" name="image" id="imageData">
+
+<button type="button" onclick="getLocation()">Capture Location</button>
+
+<video id="video" autoplay playsinline></video>
+
+<button type="button" id="snap">Take Photo</button>
+
+<canvas id="canvas" style="display:none"></canvas>
+
+<button type="submit" id="uploadBtn" disabled>Submit</button>
+
+<p id="status"></p>
+
+</form>
+
+</div>
+
+<script>
+
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const snap = document.getElementById("snap");
+const uploadBtn = document.getElementById("uploadBtn");
+const status = document.getElementById("status");
+
+
+// CAMERA START
+navigator.mediaDevices.getUserMedia({
+video:{facingMode:"environment"}
+})
+.then(stream=>{
+video.srcObject = stream;
+})
+.catch(()=>{
+status.innerHTML="Camera permission denied";
+});
+
+
+// TAKE PHOTO
+snap.addEventListener("click",()=>{
+
+canvas.width = video.videoWidth;
+canvas.height = video.videoHeight;
+
+canvas.getContext("2d").drawImage(video,0,0);
+
+let imageData = canvas.toDataURL("image/jpeg");
+
+document.getElementById("imageData").value = imageData;
+
+status.innerHTML="Photo Captured";
+
+checkReady();
+
+});
+
+
+// LOCATION
+function getLocation(){
+
+if(navigator.geolocation){
+
+status.innerHTML="Getting location...";
+
+navigator.geolocation.getCurrentPosition(function(position){
+
+let lat = position.coords.latitude;
+let lon = position.coords.longitude;
+
+document.getElementById("lat").value = lat;
+document.getElementById("lon").value = lon;
+
+let maplink = "https://maps.google.com/?q="+lat+","+lon;
+
+document.getElementById("maplink").value = maplink;
+
+status.innerHTML="Location Captured";
+
+checkReady();
+
+});
+
+}else{
+
+status.innerHTML="Location not supported";
+
+}
+
+}
+
+
+// ENABLE SUBMIT WHEN READY
+function checkReady(){
+
+let image = document.getElementById("imageData").value;
+let lat = document.getElementById("lat").value;
+
+if(image!="" && lat!=""){
+uploadBtn.disabled=false;
+}
+
+}
+
+
+// SUBMIT MESSAGE
+document.getElementById("uploadForm").addEventListener("submit",()=>{
+
+status.innerHTML="Uploading...Please wait";
+
+uploadBtn.disabled=true;
+
+});
+
+</script>
+
+</body>
+</html>
